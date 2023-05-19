@@ -1,4 +1,5 @@
 import fs from 'fs';
+import _ from 'lodash';
 
 // Read the JSON data from the file
 const jsonData = fs.readFileSync('../data/winds15Nov2021.json', 'utf-8');
@@ -8,33 +9,19 @@ const data = JSON.parse(jsonData);
 
 // Function to retrieve coordinates based on Time
 function getCoordinatesByTime(time) {
-  // Iterate over the features
-  for (const feature of data.features) {
-    // Check if the feature's Time matches the given time
-    if (feature.properties.Time === time) {
-      // Return the coordinates
-      return feature.geometry.coordinates;
-    }
-  }
-
-  // If no matching time is found
-  return null;
+  const feature = _.find(data.features, { 'properties': { 'Time': time } });
+  return feature ? feature.geometry.coordinates : null;
 }
 
 // Function to retrieve coordinates between two times
 function getCoordinatesBetweenTimes(startTime, endTime) {
-  const coordinates = [];
-
-  // Iterate over the features
-  for (const feature of data.features) {
-    const featureTime = feature.properties.Time;
-
-    // Check if the feature's Time is between the given start and end times
-    if (featureTime >= startTime && featureTime <= endTime) {
-      // Add the coordinates to the array
-      coordinates.push(feature.geometry.coordinates);
-    }
-  }
+  const coordinates = _.chain(data.features)
+    .filter(feature => {
+      const featureTime = feature.properties.Time;
+      return featureTime >= startTime && featureTime <= endTime;
+    })
+    .map(feature => feature.geometry.coordinates)
+    .value();
 
   return coordinates;
 }
